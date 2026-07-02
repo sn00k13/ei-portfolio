@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>404 — Page Not Found &middot; Uzoukwu Eric Ikenna</title>
+<meta name="robots" content="noindex"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,700;1,400&family=Syne:wght@400;500&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet"/>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#080a0d;--gold:#c9a84c;--gold2:#e8c97a;--teal:#3ecfaa;--muted:#606472;--muted2:#8a8e9a;--text:#eceae4;--border:rgba(255,255,255,0.07);--serif:'Cormorant Garamond',serif;--sans:'Syne',sans-serif;--mono:'JetBrains Mono',monospace}
+html,body{height:100%}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);display:flex;align-items:center;justify-content:center;min-height:100vh;padding:2rem;text-align:center;overflow:hidden}
+.bg-grid{position:fixed;inset:0;background-image:linear-gradient(rgba(201,168,76,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(201,168,76,0.025) 1px,transparent 1px);background-size:80px 80px;pointer-events:none;z-index:0}
+.bg-glow{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:70vw;height:70vw;border-radius:50%;background:radial-gradient(circle,rgba(62,207,170,0.035) 0%,transparent 65%);pointer-events:none;z-index:0}
+.content{position:relative;z-index:1;max-width:520px}
+.err-code{font-family:var(--serif);font-size:clamp(6rem,18vw,12rem);font-weight:700;line-height:1;color:var(--gold);opacity:0.18;user-select:none;margin-bottom:-1rem}
+.eyebrow{font-family:var(--mono);font-size:0.65rem;letter-spacing:0.22em;color:var(--teal);text-transform:uppercase;margin-bottom:1rem;display:flex;align-items:center;justify-content:center;gap:0.7rem}
+.eyebrow::before,.eyebrow::after{content:'';display:block;width:1.5rem;height:1px;background:var(--teal)}
+h1{font-family:var(--serif);font-size:clamp(1.8rem,4vw,2.8rem);font-weight:700;line-height:1.1;margin-bottom:1rem}
+h1 em{color:var(--gold);font-style:italic}
+p{font-size:0.95rem;color:rgba(236,234,228,0.6);line-height:1.85;margin-bottom:2.5rem;max-width:400px;margin-left:auto;margin-right:auto}
+.actions{display:flex;gap:1rem;flex-wrap:wrap;justify-content:center;margin-bottom:3rem}
+.btn{display:inline-flex;align-items:center;gap:0.5rem;padding:0.72rem 1.65rem;font-family:var(--mono);font-size:0.7rem;letter-spacing:0.1em;text-transform:uppercase;text-decoration:none;transition:all 0.25s}
+.btn-gold{background:var(--gold);color:#080a0d;font-weight:500}
+.btn-gold:hover{background:var(--gold2);transform:translateY(-2px)}
+.btn-ghost{background:transparent;color:var(--text);border:1px solid rgba(255,255,255,0.12)}
+.btn-ghost:hover{border-color:var(--text)}
+.quick-links{display:flex;gap:1.5rem;flex-wrap:wrap;justify-content:center}
+.quick-links a{font-family:var(--mono);font-size:0.6rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted2);text-decoration:none;transition:color 0.2s}
+.quick-links a:hover{color:var(--gold)}
+.divider{width:1px;background:var(--border);align-self:stretch}
+</style>
+</head>
+<body>
+<div class="bg-grid"></div>
+<div class="bg-glow"></div>
+<div class="content">
+  <div class="err-code">404</div>
+  <div class="eyebrow">Page Not Found</div>
+  <h1>This page has gone <em>offline</em></h1>
+  <p>The page you're looking for doesn't exist or may have been moved. Head back to the homepage — everything you need is there.</p>
+  <div class="actions">
+    <a href="/" class="btn btn-gold">&#x2190; Back to Home</a>
+    <a href="/#contact" class="btn btn-ghost">Get in Touch</a>
+  </div>
+  <div class="quick-links">
+    <a href="/#about">About</a>
+    <div class="divider"></div>
+    <a href="/#ventures">Ventures</a>
+    <div class="divider"></div>
+    <a href="/#events">Events</a>
+    <div class="divider"></div>
+    <a href="/#blog">Blog</a>
+    <div class="divider"></div>
+    <a href="/#booking">Book a Call</a>
+    <div class="divider"></div>
+    <a href="/#cv">CV</a>
+  </div>
+</div>
+</body>
+</html>
