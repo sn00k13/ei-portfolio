@@ -1,5 +1,8 @@
 # Netlify Redirects — uzoukwuericikenna.com
 
+# Landing page
+/                 /eric-uzoukwu-FINAL.html   200
+
 # Admin dashboard
 /dashboard        /dashboard.html     200
 
