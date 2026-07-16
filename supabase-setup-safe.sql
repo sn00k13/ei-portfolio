@@ -248,7 +248,14 @@ CREATE TABLE IF NOT EXISTS certifications (
   credential_url TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
-ALTER TABLE certifications RENAME COLUMN group_name TO "group";
+DO $$ BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.columns
+             WHERE table_schema = 'public' AND table_name = 'certifications' AND column_name = 'group_name') THEN
+    ALTER TABLE certifications RENAME COLUMN group_name TO "group";
+  END IF;
+END $$;
+ALTER TABLE certifications ADD COLUMN IF NOT EXISTS display_order INT DEFAULT 0;
+ALTER TABLE testimonials ADD COLUMN IF NOT EXISTS display_order INT DEFAULT 0;
 ALTER TABLE certifications ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Anon all certs" ON certifications;
 CREATE POLICY "Anon all certs" ON certifications FOR ALL USING (true) WITH CHECK (true);
@@ -415,3 +422,21 @@ GRANT EXECUTE ON FUNCTION admin_reset_password TO anon;
 -- Seed nothing here — your existing hardcoded login (in dashboard.html)
 -- remains your permanent bootstrap Super Admin and always works even if
 -- this table is empty, so you can never be locked out.
+
+-- Add status column to speaking_cards (upcoming / past)
+ALTER TABLE speaking_cards ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'past';
+
+-- Seed existing speaking cards from the site into DB (if starting fresh)
+-- Run this AFTER the main setup SQL
+INSERT INTO speaking_cards (title, type, date_period, location, organisation, my_role, short_description, status, display_order) VALUES
+('Omniverse Research Exchange 2026', 'Conference — Research Presentation', 'Jun 2026', 'Lagos, Nigeria', 'Omniverse Africa Summit 3.0', 'Researcher & Presenter', 'Presenting 4FG-Monitor at the Omniverse Research Exchange 2026 — a GSM-enabled LPG cylinder monitoring IoT device (4First Technologies). Fully funded presenter slot.', 'past', 1),
+('Cybersecurity Bootcamps — Nigeria', 'Bootcamp — Lead Instructor', '2023 – Present', 'Owerri, Nigeria', 'StreetHub Academy', 'Cybersecurity & Linux Instructor', '20+ cybersecurity training sessions covering penetration testing, SOC operations, digital forensics, Linux security, and risk analysis for 200+ professionals across Nigeria.', 'past', 2),
+('Cybersecurity Instruction — United Kingdom', 'Training — International', '2024–2025', 'United Kingdom', 'UK Partners', 'Cybersecurity Instructor', 'Training sessions focused on practical threat analysis and SOC operations for IT and security teams. Curriculum aligned with UK NCSC guidance and GDPR compliance context.', 'past', 3),
+('Umunzu Youth Organization Convention 2025', 'Convention — Speaker', '29 Nov 2025', 'Njaba LGA, Imo State', 'Umunzu Youth Organization', 'Speaker', 'Spoke on The Digital Youth: Leveraging Technology for Global Relevance — AI, digital skills, and tech-driven opportunities for Nigerian youth.', 'past', 4),
+('Trailblazer in Innovation Award', 'Award — Recognition', '2025', 'Owerri, Nigeria', 'Umunzu Youth Organization', 'Awardee', 'Honoured with the Trailblazer in Innovation Award for contributions to advancing digital growth and empowering youths through technology. Unannounced recognition.', 'past', 5),
+('Olu-Aka Institute — Graduation & Certificate Presentation', 'Mentorship — Certificate Presenter', '2024', 'Owerri, Imo State', 'Olu-Aka Institute of Technology', 'Certificate Presenter & Talent Scout', 'Returned to Olu-Aka to present certificates to new developers after their project defence. Shared his journey from student to industry professional and scouted new talents for StreetHub Academy.', 'past', 6),
+('MMEPE Africa — Choosing a Career in Cybersecurity', 'Panel — Cybersecurity Career', '5 May 2024', 'Online', 'MMEPE Africa Community', 'Speaker & Panelist', 'Joined MMEPE Africa for a panel discussion on cybersecurity career paths, specialisations, and how to break into the industry.', 'past', 7),
+('StreetHub Academy Twitter Space — Love & Tech', 'Twitter Space — Panel Discussion', '14 Feb 2024', 'Online', 'StreetHub Academy', 'Speaker', 'Live Twitter Space on balancing love and tech, career growth, and opportunities for tech enthusiasts. Open mic format.', 'past', 8),
+('Founder Dojo Imo — Global Innovation Bootcamp', 'Bootcamp — Founder Participant', '2024', 'Owerri, Imo State', 'Imo Digital City Ltd / UC Berkeley SCET / USMAC', 'Founder Participant', 'Completed Founder Dojo Imo — a Silicon Valley-led founder development bootcamp with UC Berkeley SCET and USMAC. Awarded certificate of completion.', 'past', 9),
+('TECHCRUSH Bootcamp Mentorship — Breaking into Tech', 'Mentorship — Twitter Space', '16 Dec 2025', 'Online', 'TechCrush HQ', 'Mentor & Speaker', 'Mentorship session for beginners on breaking into tech — career pathways, practical guidance, and real direction. Delivered via Twitter Space.', 'past', 10)
+ON CONFLICT DO NOTHING;
