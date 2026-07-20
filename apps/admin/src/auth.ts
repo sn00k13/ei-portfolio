@@ -31,6 +31,12 @@ interface AppToken {
 }
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  // Auth.js v5 refuses the request's Host header by default unless told to
+  // trust it — necessary on Netlify (and most serverless platforms), which
+  // proxies/terminates TLS in front of the function, so the Host header
+  // doesn't match what a single fixed NEXTAUTH_URL would predict across a
+  // custom domain, its netlify.app preview, and any future domain changes.
+  trustHost: true,
   session: { strategy: "jwt" },
   pages: { signIn: "/login" },
   providers: [
