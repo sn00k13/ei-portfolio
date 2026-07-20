@@ -1,13 +1,13 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { prisma } from "@eui/db";
+import { getPublishedBlogPostBySlug } from "../../../src/db";
 import { sanitizeContentHtml } from "@eui/shared/sanitize";
 
 export const dynamic = "force-dynamic";
 
 async function getPost(slug: string) {
-  return prisma.blogPost.findFirst({ where: { slug, status: "published" } });
+  return getPublishedBlogPostBySlug(slug);
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {

@@ -87,15 +87,15 @@ importers:
 
   apps/web:
     dependencies:
-      '@eui/db':
-        specifier: workspace:*
-        version: link:../../packages/db
       '@eui/shared':
         specifier: workspace:*
         version: link:../../packages/shared
       next:
         specifier: ^15.1.0
         version: 15.5.20(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      pg:
+        specifier: ^8.22.0
+        version: 8.22.0
       react:
         specifier: ^19.0.0
         version: 19.2.7
@@ -115,6 +115,9 @@ importers:
       '@types/node':
         specifier: ^22.10.0
         version: 22.20.1
+      '@types/pg':
+        specifier: ^8.20.0
+        version: 8.20.0
       '@types/react':
         specifier: ^19.0.0
         version: 19.2.17

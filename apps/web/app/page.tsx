@@ -1,5 +1,19 @@
-import { prisma } from "@eui/db";
 import { sanitizeContentHtml } from "@eui/shared/sanitize";
+import {
+  getSiteContent,
+  getAssessments,
+  getCyberTools,
+  getProducts,
+  getQaProducts,
+  getPmProjects,
+  getVentures,
+  getCertifications,
+  getSpeakingCards,
+  getEvents,
+  getTestimonials,
+  getCaseStudies,
+  getPublishedBlogPosts,
+} from "../src/db";
 import { SiteNav } from "../src/components/nav";
 import { Hero } from "../src/components/hero";
 import { About } from "../src/components/about";
@@ -43,19 +57,19 @@ export default async function HomePage() {
     caseStudies,
     blogPosts,
   ] = await Promise.all([
-    prisma.siteContent.findMany(),
-    prisma.assessment.findMany({ orderBy: { displayOrder: "asc" } }),
-    prisma.cyberTool.findMany({ orderBy: { displayOrder: "asc" } }),
-    prisma.product.findMany({ orderBy: { displayOrder: "asc" } }),
-    prisma.qaProduct.findMany({ orderBy: { displayOrder: "asc" } }),
-    prisma.pmProject.findMany({ orderBy: { displayOrder: "asc" } }),
-    prisma.venture.findMany({ orderBy: { displayOrder: "asc" } }),
-    prisma.certification.findMany({ orderBy: { displayOrder: "asc" } }),
-    prisma.speakingCard.findMany({ where: { status: { not: "hidden" } }, orderBy: { displayOrder: "asc" } }),
-    prisma.event.findMany({ orderBy: { dateStart: "desc" } }),
-    prisma.testimonial.findMany({ where: { status: "active" }, orderBy: { displayOrder: "asc" } }),
-    prisma.caseStudy.findMany({ orderBy: { displayOrder: "asc" } }),
-    prisma.blogPost.findMany({ where: { status: "published" }, orderBy: { publishedAt: "desc" } }),
+    getSiteContent(),
+    getAssessments(),
+    getCyberTools(),
+    getProducts(),
+    getQaProducts(),
+    getPmProjects(),
+    getVentures(),
+    getCertifications(),
+    getSpeakingCards(),
+    getEvents(),
+    getTestimonials(),
+    getCaseStudies(),
+    getPublishedBlogPosts(),
   ]);
 
   const content = Object.fromEntries(siteContentRows.map((r) => [r.key, String(r.value ?? "")]));
@@ -77,7 +91,7 @@ export default async function HomePage() {
           findings: a.findings,
           outcome: a.outcome,
           toolsUsed: a.toolsUsed,
-          metrics: a.metrics as { outcomes?: { val: string; label: string }[] } | null,
+          metrics: a.metrics,
         }))}
         tools={cyberTools.map((t) => ({
           id: Number(t.id),
@@ -166,7 +180,7 @@ export default async function HomePage() {
           results: c.results,
           techStack: c.techStack,
           fullDetails: c.fullDetails ? sanitizeContentHtml(c.fullDetails) : null,
-          outcomes: c.outcomes as { val: string; label: string }[] | null,
+          outcomes: c.outcomes,
         }))}
       />
       <BlogSection

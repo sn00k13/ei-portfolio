@@ -1,6 +1,6 @@
 "use server";
 
-import { prisma } from "@eui/db";
+import { createContactSubmission, upsertNewsletterSubscriber } from "./db";
 import { sendContactNotification } from "./resend";
 
 export type FormState = { ok: boolean; message: string } | undefined;
@@ -15,9 +15,7 @@ export async function submitContactForm(_prev: FormState, formData: FormData): P
     return { ok: false, message: "Please fill in your name, email and message." };
   }
 
-  await prisma.contactSubmission.create({
-    data: { name, email, subject, message },
-  });
+  await createContactSubmission({ name, email, subject, message });
 
   // Notification is best-effort — a Resend outage shouldn't stop the
   // submission from being saved; it's still visible in the admin dashboard.
@@ -36,11 +34,7 @@ export async function subscribeNewsletter(_prev: FormState, formData: FormData):
     return { ok: false, message: "Enter a valid email address." };
   }
 
-  await prisma.newsletterSubscriber.upsert({
-    where: { email },
-    update: {},
-    create: { email },
-  });
+  await upsertNewsletterSubscriber(email);
 
   return { ok: true, message: "Subscribed — welcome aboard." };
 }
