@@ -14,13 +14,15 @@
 // get dropped from the DB during the RLS cleanup phase.
 
 generator client {
-  provider      = "prisma-client-js"
-  output        = "../generated/client"
-  // "native" covers local dev; the other two cover Netlify's build image and
-  // its Lambda-based Next.js runtime respectively — those two don't share a
-  // libc, so a "native"-only client built during `netlify.toml`'s build step
-  // would be missing the engine binary the deployed function actually needs.
-  binaryTargets = ["native", "rhel-openssl-3.0.x", "debian-openssl-3.0.x"]
+  provider   = "prisma-client-js"
+  output     = "../generated/client"
+  // "client" engine type compiles queries to a portable WASM module instead
+  // of a native Rust binary — execution goes through the driver adapter
+  // (see src/index.ts) via plain Postgres wire protocol. No .so.node/.dll.node
+  // binary is produced at all, which sidesteps every serverless-bundler
+  // "engine binary missing from the deployed function" problem entirely
+  // (binaryTargets is meaningless here and was removed with the old engine).
+  engineType = "client"
 }
 
 datasource db {

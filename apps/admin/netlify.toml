@@ -12,15 +12,6 @@
 [[plugins]]
   package = "@netlify/plugin-nextjs"
 
-# Netlify's function bundler does its own static-import analysis to decide
-# what ships with each Lambda — it does NOT use Next's own file-tracing
-# output (outputFileTracingIncludes in next.config.ts has no effect here).
-# Prisma's query-engine binary is loaded via a computed runtime path, so
-# that analysis always misses it. This is Netlify's documented escape
-# hatch: force-include it regardless of what any bundler's analysis finds.
-[functions]
-  included_files = ["../../packages/db/generated/client/*.node"]
-
 # The admin dashboard should never be indexed.
 [[headers]]
   for = "/*"
