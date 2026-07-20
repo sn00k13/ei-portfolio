@@ -18,3 +18,12 @@
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
+
+# Netlify's function packager only auto-includes known Next.js build
+# artifacts (.next, node_modules, etc.) — a loose sibling generated/
+# folder existing on the build machine after the build command runs is
+# not enough to make it into the deployed zip. Say so explicitly, using a
+# path local to this base directory (no ../.. traversal, which may not
+# survive being packed into a zip entry).
+[functions]
+  included_files = ["generated/client/*.wasm"]
