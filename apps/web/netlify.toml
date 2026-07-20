@@ -11,3 +11,11 @@
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
+
+# Prisma's WASM query compiler (engineType = "client") is loaded via a
+# computed runtime path, same as the old native binary was — Netlify's
+# function bundler's static-import analysis doesn't always pick it up
+# (it happened to for the admin app's route set, not for this one's).
+# Force-include it explicitly rather than rely on that being consistent.
+[functions]
+  included_files = ["../../packages/db/generated/client/*.wasm"]
