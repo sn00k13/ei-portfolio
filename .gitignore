@@ -1,5 +1,7 @@
 # Environment variables
 .env
+.env.local
+.env.*.local
 
 # Node modules
 node_modules/
@@ -11,3 +13,19 @@ Thumbs.db
 # IDE
 .vscode/
 .idea/
+
+# Next.js / Turborepo
+.next/
+.turbo/
+out/
+build/
+dist/
+
+# Prisma
+packages/db/generated/
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+

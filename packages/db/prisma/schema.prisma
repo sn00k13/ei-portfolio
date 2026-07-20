@@ -1,0 +1,328 @@
+// Prisma schema for the existing Supabase Postgres database.
+// Reconciled against a live `prisma db pull` introspection of the real
+// production DB (2026-07-17) — nullability here reflects reality, not
+// assumption: most DEFAULT-only columns are nullable in Postgres (no
+// explicit NOT NULL was set when the tables were created), which is a real
+// discrepancy from the first hand-written pass of this schema. No foreign
+// keys exist in the live schema and none are invented here.
+//
+// admin_users_safe (view) and the verify_admin_login/create_admin_user/
+// admin_reset_password RPCs are intentionally NOT modeled here — the new
+// admin app queries admin_users directly server-side via this Prisma client
+// (never from the browser), so the view/RPCs that existed only to keep
+// password_hash away from the anon-keyed browser client are obsolete and
+// get dropped from the DB during the RLS cleanup phase.
+
+generator client {
+  provider      = "prisma-client-js"
+  output        = "../generated/client"
+  // "native" covers local dev; the other two cover Netlify's build image and
+  // its Lambda-based Next.js runtime respectively — those two don't share a
+  // libc, so a "native"-only client built during `netlify.toml`'s build step
+  // would be missing the engine binary the deployed function actually needs.
+  binaryTargets = ["native", "rhel-openssl-3.0.x", "debian-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model BlogPost {
+  id             BigInt    @id @default(autoincrement())
+  title          String    @unique(map: "ux_blog_posts_title")
+  /// NEW (not yet in the live DB) — for real /blog/[slug] routes, added via
+  /// this schema's `prisma db push`, not present in the original site.
+  slug           String?   @unique
+  category       String
+  coverImage     String?   @map("cover_image")
+  excerpt        String?
+  content        String
+  status         String?   @default("published")
+  createdAt      DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime? @default(now()) @map("updated_at") @db.Timestamptz(6)
+  tags           String[]
+  seoDescription String?   @map("seo_description")
+  ogImage        String?   @map("og_image")
+  isFeatured     Boolean?  @default(false) @map("is_featured")
+  publishedAt    DateTime? @map("published_at") @db.Timestamptz(6)
+
+  @@map("blog_posts")
+}
+
+model BlogCategory {
+  id        BigInt    @id @default(autoincrement())
+  name      String    @unique
+  createdAt DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@map("blog_categories")
+}
+
+model Event {
+  id               BigInt    @id @default(autoincrement())
+  name             String
+  type             String
+  status           String?   @default("upcoming")
+  dateStart        DateTime  @map("date_start") @db.Date
+  dateEnd          DateTime? @map("date_end") @db.Date
+  location         String
+  organisation     String?
+  myRole           String?   @map("my_role")
+  coverImage       String?   @map("cover_image")
+  eventLink        String?   @map("event_link")
+  shortDescription String?   @map("short_description")
+  fullDescription  String?   @map("full_description")
+  createdAt        DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@map("events")
+}
+
+/// Column set as read from the live schema. The old client-side trackEvent()
+/// call sent {event_type, page, session_id, metadata} — "page" and
+/// "metadata" don't correspond to columns here (page_section is the closest
+/// match, there is no metadata/jsonb column). Verify against the live DB
+/// before wiring up analytics writes in apps/web; this may mean those two
+/// fields were silently dropped/rejected by PostgREST in production.
+model AnalyticsEvent {
+  id          BigInt    @id @default(autoincrement())
+  eventType   String    @map("event_type")
+  pageSection String?   @map("page_section")
+  cvType      String?   @map("cv_type")
+  country     String?
+  referrer    String?
+  userAgent   String?   @map("user_agent")
+  sessionId   String?   @map("session_id")
+  createdAt   DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@map("analytics_events")
+}
+
+model ContactSubmission {
+  id        BigInt    @id @default(autoincrement())
+  name      String?
+  email     String?
+  subject   String?
+  message   String?
+  isRead    Boolean?  @default(false) @map("is_read")
+  createdAt DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@map("contact_submissions")
+}
+
+model SiteContent {
+  id        BigInt    @id @default(autoincrement())
+  key       String    @unique
+  value     String?
+  updatedAt DateTime? @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  @@map("site_content")
+}
+
+model CvFile {
+  id         BigInt    @id @default(autoincrement())
+  cvType     String    @map("cv_type")
+  filename   String?
+  /// NEW (not yet in the live DB) — points at the Supabase Storage object
+  /// (cv-files bucket), replacing the old localStorage base64 hack.
+  fileUrl    String?   @map("file_url")
+  uploadedAt DateTime? @default(now()) @map("uploaded_at") @db.Timestamptz(6)
+
+  @@map("cv_files")
+}
+
+model NewsletterSubscriber {
+  id           BigInt    @id @default(autoincrement())
+  email        String    @unique
+  subscribedAt DateTime? @default(now()) @map("subscribed_at") @db.Timestamptz(6)
+
+  @@map("newsletter_subscribers")
+}
+
+model SpeakingCard {
+  id               BigInt    @id @default(autoincrement())
+  title            String    @unique(map: "ux_speaking_cards_title")
+  type             String
+  datePeriod       String?   @map("date_period")
+  location         String?
+  organisation     String?
+  myRole           String?   @map("my_role")
+  shortDescription String?   @map("short_description")
+  fullDescription  String?   @map("full_description")
+  coverImage       String?   @map("cover_image")
+  status           String?   @default("active")
+  displayOrder     Int?      @default(0) @map("display_order")
+  createdAt        DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@map("speaking_cards")
+}
+
+model Testimonial {
+  id           BigInt    @id @default(autoincrement())
+  quote        String
+  name         String    @unique(map: "ux_testimonials_name")
+  role         String?
+  avatar       String?
+  status       String?   @default("active")
+  createdAt    DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  displayOrder Int?      @default(0) @map("display_order")
+
+  @@map("testimonials")
+}
+
+model Product {
+  id           BigInt    @id @default(autoincrement())
+  name         String
+  sector       String?
+  status       String?   @default("progress")
+  description  String?
+  techStack    String[]  @map("tech_stack")
+  logoUrl      String?   @map("logo_url")
+  websiteUrl   String?   @map("website_url")
+  displayOrder Int?      @default(0) @map("display_order")
+  createdAt    DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@map("products")
+}
+
+model Venture {
+  id           BigInt    @id @default(autoincrement())
+  name         String
+  type         String?
+  role         String?
+  status       String?
+  description  String?
+  logoUrl      String?   @map("logo_url")
+  accentColor  String?   @map("accent_color")
+  displayOrder Int?      @default(0) @map("display_order")
+  createdAt    DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  websiteUrl   String?   @map("website_url")
+
+  @@map("ventures")
+}
+
+/// Populated by a Server Action transaction on every site_content update
+/// (save old value here, then update site_content) — there's no DB trigger,
+/// matching the old app-level "history" logic exactly.
+model ContentHistory {
+  id         BigInt    @id @default(autoincrement())
+  contentKey String    @map("content_key")
+  value      String?
+  savedAt    DateTime? @default(now()) @map("saved_at") @db.Timestamptz(6)
+
+  @@map("content_history")
+}
+
+model CaseStudy {
+  id           BigInt    @id @default(autoincrement())
+  title        String
+  tag          String?
+  label        String?
+  challenge    String?
+  results      String[]
+  techStack    String[]  @map("tech_stack")
+  fullDetails  String?   @map("full_details")
+  outcomes     Json?
+  displayOrder Int?      @default(0) @map("display_order")
+  createdAt    DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@map("case_studies")
+}
+
+model Certification {
+  id            BigInt    @id @default(autoincrement())
+  name          String    @unique(map: "ux_certifications_name")
+  issuer        String
+  dateEarned    String?   @map("date_earned")
+  /// "group" is a reserved word — mapped to the quoted "group" column.
+  group         String?   @map("group")
+  credentialUrl String?   @map("credential_url")
+  createdAt     DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  displayOrder  Int?      @default(0) @map("display_order")
+
+  @@map("certifications")
+}
+
+model PmProject {
+  id           BigInt    @id @default(autoincrement())
+  name         String    @unique(map: "ux_pm_projects_name")
+  role         String?
+  description  String?
+  status       String?   @default("active")
+  displayOrder Int?      @default(0) @map("display_order")
+  createdAt    DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@map("pm_projects")
+}
+
+model QaProduct {
+  id           BigInt    @id @default(autoincrement())
+  name         String    @unique(map: "ux_qa_products_name")
+  sector       String?
+  description  String?
+  displayOrder Int?      @default(0) @map("display_order")
+  createdAt    DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@map("qa_products")
+}
+
+model Assessment {
+  id           BigInt    @id @default(autoincrement())
+  title        String
+  tag          String?
+  label        String?
+  overview     String?
+  findings     String[]
+  outcome      String?
+  toolsUsed    String[]  @map("tools_used")
+  metrics      Json?     @default("{}")
+  displayOrder Int?      @default(0) @map("display_order")
+  createdAt    DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@map("assessments")
+}
+
+model CyberTool {
+  id           BigInt    @id @default(autoincrement())
+  name         String
+  category     String?
+  description  String?
+  techStack    String[]  @map("tech_stack")
+  githubUrl    String?   @map("github_url")
+  displayOrder Int?      @default(0) @map("display_order")
+  createdAt    DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@map("cybertools")
+}
+
+model AdminActivityLog {
+  id        BigInt    @id @default(autoincrement())
+  icon      String?
+  action    String
+  detail    String?
+  sessionId String?   @map("session_id")
+  loggedAt  DateTime? @default(now()) @map("logged_at") @db.Timestamptz(6)
+
+  @@map("admin_activity_log")
+}
+
+model AdminUser {
+  id           BigInt    @id @default(autoincrement())
+  username     String    @unique
+  /// Standard bcrypt hash (pgcrypto gen_salt('bf') originally; bcryptjs is
+  /// wire-compatible, no re-hash needed for existing rows).
+  passwordHash String    @map("password_hash")
+  displayName  String?   @map("display_name")
+  email        String?
+  role         String?   @default("editor")
+  /// Array of ADMIN_SECTIONS ids from @eui/shared — ignored for role === 'super_admin'.
+  permissions  Json?     @default("[]")
+  status       String?   @default("active")
+  createdAt    DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  lastLogin    DateTime? @map("last_login") @db.Timestamptz(6)
+  /// NEW (not yet in the live DB) — replaces the per-browser localStorage
+  /// goals/notepad state so it follows the admin across devices.
+  /// Shape: { goals?: {...}, notepad?: string, notepadOpen?: boolean }
+  preferences  Json?
+
+  @@map("admin_users")
+}

@@ -1,0 +1,16 @@
+[build]
+  base = "apps/admin"
+  publish = ".next"
+  command = "pnpm --filter @eui/db run generate && pnpm --filter @eui/admin run build"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+# The admin dashboard should never be indexed.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"

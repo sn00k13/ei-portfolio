@@ -1,0 +1,21 @@
+{
+  "name": "uzoukwu-eric-ikenna-monorepo",
+  "private": true,
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "db:generate": "pnpm --filter @eui/db generate",
+    "db:push": "pnpm --filter @eui/db push",
+    "db:seed": "pnpm --filter @eui/db seed"
+  },
+  "devDependencies": {
+    "turbo": "^2.3.0",
+    "typescript": "^5.7.0"
+  },
+  "packageManager": "pnpm@11.13.1"
+}

@@ -1,0 +1,43 @@
+/*
+ * Design tokens ported verbatim from the old dashboard.html :root block so
+ * the admin app matches the existing dark theme. The full de-duplicated
+ * stylesheet (panel layout, sidebar, forms, etc.) gets built out panel by
+ * panel alongside each admin route.
+ */
+:root {
+  --bg: #080a0d;
+  --bg2: #0d0f14;
+  --bg3: #12151b;
+  --border: rgba(255, 255, 255, 0.06);
+  --border2: rgba(255, 255, 255, 0.12);
+  --text: #eceae4;
+  --muted: #606472;
+  --muted2: #8a8e9a;
+  --gold: #c9a84c;
+  --gold2: #e8c97a;
+  --teal: #3ecfaa;
+  --teal2: #1a8f75;
+  --red: #e05c4a;
+  --blue: #4a9eff;
+  --purp: #9b7ef8;
+  --serif: "Cormorant Garamond", Georgia, serif;
+  --sans: "Syne", system-ui, sans-serif;
+  --mono: "JetBrains Mono", monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  padding: 0;
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+}
+
+a {
+  color: inherit;
+}
