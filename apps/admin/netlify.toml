@@ -4,7 +4,10 @@
   command = "pnpm --filter @eui/db run generate && pnpm --filter @eui/admin run build"
 
 [build.environment]
-  NODE_VERSION = "20"
+  # pnpm is pinned to 11.13.1 via the root package.json "packageManager"
+  # field, which requires Node >=22.13 — Netlify's corepack-fetched pnpm
+  # fails to even start (ERR_UNKNOWN_BUILTIN_MODULE: node:sqlite) on Node 20.
+  NODE_VERSION = "22"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
