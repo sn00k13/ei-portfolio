@@ -23,6 +23,9 @@ dist/
 
 # Prisma
 packages/db/generated/
+# Netlify build-time copy of the generated client (see apps/*/netlify.toml) —
+# placed where Prisma's own process.cwd() fallback looks for it once bundled.
+apps/*/generated/
 
 # Logs
 *.log

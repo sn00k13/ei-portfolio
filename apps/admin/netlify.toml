@@ -1,7 +1,14 @@
 [build]
   base = "apps/admin"
   publish = ".next"
-  command = "pnpm --filter @eui/db run generate && pnpm --filter @eui/admin run build"
+  # When Prisma's bundled client can't find schema.prisma next to its own
+  # __dirname (guaranteed once any bundler relocates the code), it falls
+  # back to checking process.cwd()/generated/client/schema.prisma — that's
+  # Prisma's own documented mechanism for exactly this scenario, not
+  # something we're working around. process.cwd() for the deployed
+  # function is this app's own directory, so copy the real generated
+  # client there so that fallback lookup actually finds something.
+  command = "pnpm --filter @eui/db run generate && mkdir -p generated/client && cp -r ../../packages/db/generated/client/. generated/client/ && pnpm --filter @eui/admin run build"
 
 [build.environment]
   # pnpm is pinned to 11.13.1 via the root package.json "packageManager"
@@ -11,13 +18,6 @@
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
-
-# Prisma's WASM query compiler (engineType = "client") is loaded via a
-# computed runtime path — Netlify's function bundler's static-import
-# analysis doesn't reliably pick it up. Force-include it explicitly rather
-# than rely on it working by chance for this app's particular route set.
-[functions]
-  included_files = ["../../packages/db/generated/client/*.wasm"]
 
 # The admin dashboard should never be indexed.
 [[headers]]
