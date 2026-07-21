@@ -1,10 +1,10 @@
 "use server";
 
-import { prisma } from "@eui/db";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireSection } from "@/require-section";
 import { uploadToBucket, BLOG_IMAGES_BUCKET } from "@/storage";
+import { crudInsert, crudUpdate, crudDelete, isUniqueViolation } from "@/db";
 import type { CrudConfig, FieldDef } from "./types";
 
 function coerceValue(field: FieldDef, raw: FormDataEntryValue | null): unknown {
@@ -68,15 +68,14 @@ export async function genericSave(
     return { error: err.message ?? "Invalid form data." };
   }
 
-  const model = (prisma as any)[config.modelName];
   try {
     if (id) {
-      await model.update({ where: { id: BigInt(id) }, data });
+      await crudUpdate(config.tableName, id, data);
     } else {
-      await model.create({ data });
+      await crudInsert(config.tableName, data);
     }
-  } catch (err: any) {
-    if (err?.code === "P2002") {
+  } catch (err: unknown) {
+    if (isUniqueViolation(err)) {
       return { error: `An entry with that ${config.titleField} already exists.` };
     }
     throw err;
@@ -89,7 +88,6 @@ export async function genericSave(
 /** Bind a CrudConfig: `genericDelete.bind(null, config)`. */
 export async function genericDelete(config: CrudConfig, id: number) {
   await requireSection(config.sectionId);
-  const model = (prisma as any)[config.modelName];
-  await model.delete({ where: { id: BigInt(id) } });
+  await crudDelete(config.tableName, id);
   revalidatePath(config.routeBase);
 }

@@ -1,7 +1,7 @@
 [build]
   base = "apps/admin"
   publish = ".next"
-  command = "pnpm --filter @eui/db run generate && pnpm --filter @eui/admin run build"
+  command = "pnpm --filter @eui/admin run build"
 
 [build.environment]
   # pnpm is pinned to 11.13.1 via the root package.json "packageManager"

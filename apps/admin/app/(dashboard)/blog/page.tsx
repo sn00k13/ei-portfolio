@@ -1,10 +1,19 @@
 import Link from "next/link";
-import { prisma } from "@eui/db";
+import { pool, toCamelCaseRows } from "@/db";
 import { requireSection } from "@/require-section";
 import { formatDate } from "@eui/shared";
 import { DeleteButton, StatusToggleButton } from "./row-actions";
 
 export const dynamic = "force-dynamic";
+
+interface BlogPostRow {
+  id: string;
+  title: string;
+  category: string;
+  status: string | null;
+  publishedAt: string | null;
+  isFeatured: boolean | null;
+}
 
 export default async function BlogListPage({
   searchParams,
@@ -14,20 +23,23 @@ export default async function BlogListPage({
   await requireSection("blog");
   const { q, status } = await searchParams;
 
-  const posts = await prisma.blogPost.findMany({
-    where: {
-      ...(status ? { status } : {}),
-      ...(q
-        ? {
-            OR: [
-              { title: { contains: q, mode: "insensitive" } },
-              { category: { contains: q, mode: "insensitive" } },
-            ],
-          }
-        : {}),
-    },
-    orderBy: { createdAt: "desc" },
-  });
+  const conditions: string[] = [];
+  const values: unknown[] = [];
+  if (status) {
+    values.push(status);
+    conditions.push(`status = $${values.length}`);
+  }
+  if (q) {
+    values.push(`%${q}%`);
+    conditions.push(`(title ilike $${values.length} or category ilike $${values.length})`);
+  }
+  const whereClause = conditions.length ? `where ${conditions.join(" and ")}` : "";
+
+  const { rows: raw } = await pool.query(
+    `select id, title, category, status, published_at, is_featured from blog_posts ${whereClause} order by created_at desc`,
+    values
+  );
+  const posts = toCamelCaseRows<BlogPostRow>(raw);
 
   return (
     <div>

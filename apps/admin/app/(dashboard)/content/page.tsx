@@ -1,13 +1,19 @@
-import { prisma } from "@eui/db";
 import { requireSection } from "@/require-section";
+import { pool, toCamelCaseRows } from "@/db";
 import { ContentRow } from "./content-row";
 import { AddKeyForm } from "./add-key-form";
 
 export const dynamic = "force-dynamic";
 
+interface SiteContentRow {
+  key: string;
+  value: string | null;
+}
+
 export default async function SiteContentPage() {
   await requireSection("content");
-  const rows = await prisma.siteContent.findMany({ orderBy: { key: "asc" } });
+  const { rows: raw } = await pool.query(`select key, value from site_content order by key asc`);
+  const rows = toCamelCaseRows<SiteContentRow>(raw);
 
   return (
     <div>

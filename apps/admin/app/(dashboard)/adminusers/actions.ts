@@ -3,9 +3,9 @@
 import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { prisma } from "@eui/db";
 import { requireSection } from "@/require-section";
 import { auth } from "@/auth";
+import { crudInsert, crudUpdate, crudDelete, isUniqueViolation, pool } from "@/db";
 import { ROLE_PRESETS, type AdminRole } from "@eui/shared";
 
 export type AdminUserFormState = { error?: string } | undefined;
@@ -40,19 +40,19 @@ export async function saveAdminUser(
 
   if (!username) return { error: "Username is required." };
 
-  const data: any = { username, displayName, email, role, status, permissions };
+  const data: Record<string, unknown> = { username, displayName, email, role, status, permissions };
 
   try {
     if (id) {
       if (password) data.passwordHash = await bcrypt.hash(password, 12);
-      await prisma.adminUser.update({ where: { id: BigInt(id) }, data });
+      await crudUpdate("admin_users", id, data);
     } else {
       if (!password) return { error: "Password is required for a new user." };
       data.passwordHash = await bcrypt.hash(password, 12);
-      await prisma.adminUser.create({ data });
+      await crudInsert("admin_users", data);
     }
-  } catch (err: any) {
-    if (err?.code === "P2002") return { error: "That username is already taken." };
+  } catch (err: unknown) {
+    if (isUniqueViolation(err)) return { error: "That username is already taken." };
     throw err;
   }
 
@@ -65,7 +65,7 @@ export async function deleteAdminUser(id: number) {
   if (Number(session.user.id) === id) {
     throw new Error("You cannot delete your own account.");
   }
-  await prisma.adminUser.delete({ where: { id: BigInt(id) } });
+  await crudDelete("admin_users", id);
   revalidatePath("/adminusers");
 }
 
@@ -73,8 +73,8 @@ export async function resetOwnPassword(newPassword: string) {
   const session = await auth();
   if (!session?.user) throw new Error("Not authenticated.");
   const passwordHash = await bcrypt.hash(newPassword, 12);
-  await prisma.adminUser.update({
-    where: { id: BigInt(session.user.id) },
-    data: { passwordHash },
-  });
+  await pool.query(`update admin_users set password_hash = $1 where id = $2`, [
+    passwordHash,
+    session.user.id,
+  ]);
 }

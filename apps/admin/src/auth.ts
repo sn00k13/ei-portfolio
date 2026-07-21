@@ -1,8 +1,18 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
-import { prisma } from "@eui/db";
+import { pool, toCamelCase } from "./db";
 import type { AdminRole } from "@eui/shared";
+
+interface AdminUserRow {
+  id: string;
+  username: string;
+  passwordHash: string;
+  displayName: string | null;
+  role: string | null;
+  status: string | null;
+  permissions: string[] | null;
+}
 
 declare module "next-auth" {
   interface Session {
@@ -50,23 +60,21 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const password = credentials?.password;
         if (typeof username !== "string" || typeof password !== "string") return null;
 
-        const user = await prisma.adminUser.findUnique({ where: { username } });
+        const { rows } = await pool.query(`select * from admin_users where username = $1`, [username]);
+        const user = rows[0] ? toCamelCase<AdminUserRow>(rows[0]) : null;
         if (!user || user.status !== "active") return null;
 
         const valid = await bcrypt.compare(password, user.passwordHash);
         if (!valid) return null;
 
-        await prisma.adminUser.update({
-          where: { id: user.id },
-          data: { lastLogin: new Date() },
-        });
+        await pool.query(`update admin_users set last_login = now() where id = $1`, [user.id]);
 
         return {
-          id: user.id.toString(),
+          id: user.id,
           username: user.username,
           displayName: user.displayName,
           role: user.role as AdminRole,
-          permissions: Array.isArray(user.permissions) ? (user.permissions as string[]) : [],
+          permissions: Array.isArray(user.permissions) ? user.permissions : [],
         };
       },
     }),

@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
-import { prisma } from "@eui/db";
 import { requireSection } from "@/require-section";
+import { crudFindById } from "@/db";
 import { CaseStudyForm } from "../case-form";
 
 export const dynamic = "force-dynamic";
@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 export default async function EditCaseStudyPage({ params }: { params: Promise<{ id: string }> }) {
   await requireSection("casestudies");
   const { id } = await params;
-  const row = await prisma.caseStudy.findUnique({ where: { id: BigInt(id) } });
+  const row = await crudFindById("case_studies", Number(id));
   if (!row) notFound();
 
   return (

@@ -1,13 +1,22 @@
-import { prisma } from "@eui/db";
 import { requireSection } from "@/require-section";
+import { pool, toCamelCaseRows } from "@/db";
 import { UploadCvForm } from "./upload-form";
 import { DeleteCvButton } from "./row-actions";
 
 export const dynamic = "force-dynamic";
 
+interface CvFileRow {
+  id: string;
+  cvType: string;
+  filename: string | null;
+  fileUrl: string | null;
+  uploadedAt: string | null;
+}
+
 export default async function CvManagerPage() {
   await requireSection("cvmanager");
-  const rows = await prisma.cvFile.findMany({ orderBy: { uploadedAt: "desc" } });
+  const { rows: raw } = await pool.query(`select * from cv_files order by uploaded_at desc`);
+  const rows = toCamelCaseRows<CvFileRow>(raw);
 
   return (
     <div>

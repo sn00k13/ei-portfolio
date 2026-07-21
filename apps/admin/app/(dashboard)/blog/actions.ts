@@ -3,10 +3,10 @@
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { prisma } from "@eui/db";
 import { slugify } from "@eui/shared";
 import { requireSection } from "@/require-section";
 import { uploadToBucket, BLOG_IMAGES_BUCKET } from "@/storage";
+import { pool, crudInsert, crudUpdate, crudDelete, isUniqueViolation } from "@/db";
 
 const blogPostSchema = z.object({
   id: z.coerce.number().optional(),
@@ -71,12 +71,12 @@ export async function saveBlogPost(_prevState: BlogFormState, formData: FormData
 
   try {
     if (data.id) {
-      await prisma.blogPost.update({ where: { id: BigInt(data.id) }, data: payload });
+      await crudUpdate("blog_posts", data.id, payload);
     } else {
-      await prisma.blogPost.create({ data: payload });
+      await crudInsert("blog_posts", payload);
     }
-  } catch (err: any) {
-    if (err?.code === "P2002") {
+  } catch (err: unknown) {
+    if (isUniqueViolation(err)) {
       return { error: "A post with that title or slug already exists." };
     }
     throw err;
@@ -88,20 +88,22 @@ export async function saveBlogPost(_prevState: BlogFormState, formData: FormData
 
 export async function deleteBlogPost(id: number) {
   await requireSection("blog");
-  await prisma.blogPost.delete({ where: { id: BigInt(id) } });
+  await crudDelete("blog_posts", id);
   revalidatePath("/blog");
 }
 
 export async function toggleBlogPostStatus(id: number, nextStatus: "draft" | "published") {
   await requireSection("blog");
-  await prisma.blogPost.update({
-    where: { id: BigInt(id) },
-    data: {
-      status: nextStatus,
-      publishedAt: nextStatus === "published" ? new Date() : undefined,
-      updatedAt: new Date(),
-    },
-  });
+  if (nextStatus === "published") {
+    await pool.query(
+      `update blog_posts set status = $1, published_at = now(), updated_at = now() where id = $2`,
+      [nextStatus, id]
+    );
+  } else {
+    // Leave published_at untouched when un-publishing, matching the
+    // original Prisma behavior (undefined field = no-op, not a clear).
+    await pool.query(`update blog_posts set status = $1, updated_at = now() where id = $2`, [nextStatus, id]);
+  }
   revalidatePath("/blog");
 }
 
@@ -109,10 +111,9 @@ export async function addBlogCategory(name: string) {
   await requireSection("blog");
   const trimmed = name.trim();
   if (!trimmed) return;
-  await prisma.blogCategory.upsert({
-    where: { name: trimmed },
-    update: {},
-    create: { name: trimmed },
-  });
+  await pool.query(
+    `insert into blog_categories (name) values ($1) on conflict (name) do nothing`,
+    [trimmed]
+  );
   revalidatePath("/blog");
 }

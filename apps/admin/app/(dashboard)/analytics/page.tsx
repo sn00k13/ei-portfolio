@@ -1,7 +1,18 @@
-import { prisma } from "@eui/db";
+import { pool, toCamelCaseRows } from "@/db";
 import { requireSection } from "@/require-section";
 
 export const dynamic = "force-dynamic";
+
+interface AnalyticsEventRow {
+  id: string;
+  eventType: string;
+  pageSection: string | null;
+  cvType: string | null;
+  country: string | null;
+  referrer: string | null;
+  sessionId: string | null;
+  createdAt: string | null;
+}
 
 function Bar({ label, value, max, color }: { label: string; value: number; max: number; color: string }) {
   const pct = max > 0 ? Math.round((value / max) * 100) : 0;
@@ -38,13 +49,22 @@ export default async function AnalyticsPage({
   const days = daysParam ? Number(daysParam) : 7;
 
   const since = days > 0 ? new Date(Date.now() - days * 24 * 60 * 60 * 1000) : undefined;
-  const where = since ? { createdAt: { gte: since } } : {};
 
-  const [events, subCount, postCount] = await Promise.all([
-    prisma.analyticsEvent.findMany({ where, orderBy: { createdAt: "desc" }, take: 2000 }),
-    prisma.contactSubmission.count({ where: since ? { createdAt: { gte: since } } : {} }),
-    prisma.blogPost.count(),
+  const [eventsResult, subCountResult, postCountResult] = await Promise.all([
+    since
+      ? pool.query(
+          `select * from analytics_events where created_at >= $1 order by created_at desc limit 2000`,
+          [since]
+        )
+      : pool.query(`select * from analytics_events order by created_at desc limit 2000`),
+    since
+      ? pool.query(`select count(*) from contact_submissions where created_at >= $1`, [since])
+      : pool.query(`select count(*) from contact_submissions`),
+    pool.query(`select count(*) from blog_posts`),
   ]);
+  const events = toCamelCaseRows<AnalyticsEventRow>(eventsResult.rows);
+  const subCount = Number(subCountResult.rows[0].count);
+  const postCount = Number(postCountResult.rows[0].count);
 
   const pageViews = events.filter((e) => e.eventType === "page_view").length;
   const uniqueSessions = new Set(events.map((e) => e.sessionId).filter(Boolean)).size;

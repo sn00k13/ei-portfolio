@@ -2,8 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { prisma } from "@eui/db";
 import { requireSection } from "@/require-section";
+import { crudInsert, crudUpdate, crudDelete } from "@/db";
 
 export type CaseStudyFormState = { error?: string } | undefined;
 
@@ -42,14 +42,14 @@ export async function saveCaseStudy(
     results: parseTags(formData.get("results")),
     techStack: parseTags(formData.get("techStack")),
     fullDetails: (formData.get("fullDetails") as string) || null,
-    outcomes: outcomes as any,
+    outcomes,
     displayOrder: Number(formData.get("displayOrder") || 0),
   };
 
   if (id) {
-    await prisma.caseStudy.update({ where: { id: BigInt(id) }, data });
+    await crudUpdate("case_studies", id, data);
   } else {
-    await prisma.caseStudy.create({ data });
+    await crudInsert("case_studies", data);
   }
 
   revalidatePath("/casestudies");
@@ -58,6 +58,6 @@ export async function saveCaseStudy(
 
 export async function deleteCaseStudy(id: number) {
   await requireSection("casestudies");
-  await prisma.caseStudy.delete({ where: { id: BigInt(id) } });
+  await crudDelete("case_studies", id);
   revalidatePath("/casestudies");
 }

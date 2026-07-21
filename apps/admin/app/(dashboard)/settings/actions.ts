@@ -1,12 +1,19 @@
 "use server";
 
 import bcrypt from "bcryptjs";
-import { prisma } from "@eui/db";
+import { pool, toCamelCase } from "@/db";
 import { auth } from "@/auth";
 import { logActivity } from "@/activity-log";
 import { revalidatePath } from "next/cache";
 
 export type SettingsState = { error?: string; success?: string } | undefined;
+
+interface AdminUserRow {
+  id: string;
+  username: string;
+  passwordHash: string;
+  preferences: Record<string, unknown> | null;
+}
 
 export async function changePassword(_prev: SettingsState, formData: FormData): Promise<SettingsState> {
   const session = await auth();
@@ -19,14 +26,15 @@ export async function changePassword(_prev: SettingsState, formData: FormData): 
   if (newPassword.length < 8) return { error: "New password must be at least 8 characters." };
   if (newPassword !== confirmPassword) return { error: "Passwords do not match." };
 
-  const user = await prisma.adminUser.findUnique({ where: { id: BigInt(session.user.id) } });
+  const { rows } = await pool.query(`select * from admin_users where id = $1`, [session.user.id]);
+  const user = rows[0] ? toCamelCase<AdminUserRow>(rows[0]) : null;
   if (!user) return { error: "User not found." };
 
   const valid = await bcrypt.compare(currentPassword, user.passwordHash);
   if (!valid) return { error: "Current password is incorrect." };
 
   const passwordHash = await bcrypt.hash(newPassword, 12);
-  await prisma.adminUser.update({ where: { id: user.id }, data: { passwordHash } });
+  await pool.query(`update admin_users set password_hash = $1 where id = $2`, [passwordHash, user.id]);
   await logActivity("Password changed", user.username, "🔒");
 
   return { success: "Password updated." };
@@ -43,13 +51,13 @@ export async function saveGoals(formData: FormData) {
     submissions: Number(formData.get("goalSubmissions") ?? 0) || 0,
   };
 
-  const user = await prisma.adminUser.findUnique({ where: { id: BigInt(session.user.id) } });
-  const existingPrefs = (user?.preferences as Record<string, unknown> | null) ?? {};
+  const { rows } = await pool.query(`select preferences from admin_users where id = $1`, [session.user.id]);
+  const existingPrefs = (rows[0]?.preferences as Record<string, unknown> | null) ?? {};
 
-  await prisma.adminUser.update({
-    where: { id: BigInt(session.user.id) },
-    data: { preferences: { ...existingPrefs, goals } },
-  });
+  await pool.query(`update admin_users set preferences = $1 where id = $2`, [
+    JSON.stringify({ ...existingPrefs, goals }),
+    session.user.id,
+  ]);
 
   revalidatePath("/settings");
 }

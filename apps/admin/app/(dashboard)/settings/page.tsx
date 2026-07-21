@@ -1,4 +1,4 @@
-import { prisma } from "@eui/db";
+import { pool, toCamelCase } from "@/db";
 import { auth } from "@/auth";
 import { requireSection } from "@/require-section";
 import { PasswordForm } from "./password-form";
@@ -6,11 +6,18 @@ import { GoalsForm } from "./goals-form";
 
 export const dynamic = "force-dynamic";
 
+interface AdminUserRow {
+  id: string;
+  username: string;
+  preferences: { goals?: Record<string, number> } | null;
+}
+
 export default async function SettingsPage() {
   await requireSection("settings");
   const session = await auth();
-  const user = await prisma.adminUser.findUnique({ where: { id: BigInt(session!.user.id) } });
-  const preferences = (user?.preferences as { goals?: Record<string, number> } | null) ?? {};
+  const { rows } = await pool.query(`select * from admin_users where id = $1`, [session!.user.id]);
+  const user = rows[0] ? toCamelCase<AdminUserRow>(rows[0]) : null;
+  const preferences = user?.preferences ?? {};
 
   return (
     <div>

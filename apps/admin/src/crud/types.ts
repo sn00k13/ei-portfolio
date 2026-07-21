@@ -1,5 +1,5 @@
 export interface FieldDef {
-  /** Must match the Prisma model field name (camelCase). */
+  /** camelCase; converted to the snake_case column name automatically. */
   name: string;
   label: string;
   type: "text" | "textarea" | "url" | "number" | "checkbox" | "select" | "tags" | "date" | "json" | "image";
@@ -10,8 +10,8 @@ export interface FieldDef {
 export interface CrudConfig {
   /** Matches an id in ADMIN_SECTIONS (@eui/shared). */
   sectionId: string;
-  /** Prisma client property name, e.g. "event", "speakingCard". */
-  modelName: string;
+  /** Real Postgres table name, e.g. "events", "speaking_cards". */
+  tableName: string;
   /** Route base, e.g. "/events". */
   routeBase: string;
   label: string;

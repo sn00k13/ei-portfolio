@@ -1,4 +1,4 @@
-import { prisma } from "@eui/db";
+import { pool } from "@/db";
 import { auth } from "@/auth";
 import { hasPermission } from "@eui/shared";
 
@@ -8,8 +8,10 @@ export async function GET() {
     return new Response("Forbidden", { status: 403 });
   }
 
-  const rows = await prisma.newsletterSubscriber.findMany({ orderBy: { subscribedAt: "desc" } });
-  const csv = ["email,subscribed_at", ...rows.map((r) => `${r.email},${r.subscribedAt?.toISOString() ?? ""}`)].join(
+  const { rows } = await pool.query<{ email: string; subscribed_at: Date | null }>(
+    `select email, subscribed_at from newsletter_subscribers order by subscribed_at desc`
+  );
+  const csv = ["email,subscribed_at", ...rows.map((r) => `${r.email},${r.subscribed_at?.toISOString() ?? ""}`)].join(
     "\n"
   );
 

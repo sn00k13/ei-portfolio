@@ -1,20 +1,31 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { prisma } from "@eui/db";
 import { requireSection } from "@/require-section";
+import { pool, toCamelCase } from "@/db";
 import { formatDate } from "@eui/shared";
 import { DeleteSubmissionButton } from "../row-actions";
 
 export const dynamic = "force-dynamic";
 
+interface ContactSubmissionRow {
+  id: string;
+  name: string | null;
+  email: string | null;
+  subject: string | null;
+  message: string | null;
+  isRead: boolean | null;
+  createdAt: string;
+}
+
 export default async function SubmissionDetailPage({ params }: { params: Promise<{ id: string }> }) {
   await requireSection("submissions");
   const { id } = await params;
-  const sub = await prisma.contactSubmission.findUnique({ where: { id: BigInt(id) } });
+  const { rows } = await pool.query(`select * from contact_submissions where id = $1`, [id]);
+  const sub = rows[0] ? toCamelCase<ContactSubmissionRow>(rows[0]) : null;
   if (!sub) notFound();
 
   if (!sub.isRead) {
-    await prisma.contactSubmission.update({ where: { id: sub.id }, data: { isRead: true } });
+    await pool.query(`update contact_submissions set is_read = true where id = $1`, [sub.id]);
   }
 
   const mailto = sub.email

@@ -1,6 +1,6 @@
 import { notFound, redirect } from "next/navigation";
-import { prisma } from "@eui/db";
 import { requireSection } from "@/require-section";
+import { crudFindById } from "@/db";
 import { AdminUserForm } from "../admin-user-form";
 import type { AdminRole } from "@eui/shared";
 
@@ -11,7 +11,7 @@ export default async function EditAdminUserPage({ params }: { params: Promise<{ 
   if (session.user.role !== "super_admin") redirect("/overview");
 
   const { id } = await params;
-  const row = await prisma.adminUser.findUnique({ where: { id: BigInt(id) } });
+  const row = await crudFindById("admin_users", Number(id));
   if (!row) notFound();
 
   return (

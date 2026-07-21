@@ -1,4 +1,4 @@
-import { prisma } from "@eui/db";
+import { pool } from "@/db";
 import { requireSection } from "@/require-section";
 import { BlogForm } from "../blog-form";
 
@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 
 export default async function NewBlogPostPage() {
   await requireSection("blog");
-  const categories = await prisma.blogCategory.findMany({ orderBy: { name: "asc" } });
+  const { rows: categories } = await pool.query(`select name from blog_categories order by name asc`);
 
   return (
     <div>

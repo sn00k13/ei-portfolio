@@ -1,8 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { prisma } from "@eui/db";
 import { requireSection } from "@/require-section";
+import { pool } from "@/db";
 import { resend, BROADCAST_FROM, wrapBroadcastHtml } from "@/resend";
 import { logActivity } from "@/activity-log";
 
@@ -10,17 +10,16 @@ export async function addSubscriber(email: string) {
   await requireSection("newsletter");
   const trimmed = email.trim().toLowerCase();
   if (!trimmed) return;
-  await prisma.newsletterSubscriber.upsert({
-    where: { email: trimmed },
-    update: {},
-    create: { email: trimmed },
-  });
+  await pool.query(
+    `insert into newsletter_subscribers (email) values ($1) on conflict (email) do nothing`,
+    [trimmed]
+  );
   revalidatePath("/newsletter");
 }
 
 export async function deleteSubscriber(id: number) {
   await requireSection("newsletter");
-  await prisma.newsletterSubscriber.delete({ where: { id: BigInt(id) } });
+  await pool.query(`delete from newsletter_subscribers where id = $1`, [id]);
   revalidatePath("/newsletter");
 }
 
@@ -41,7 +40,7 @@ export async function sendBroadcast(_prev: BroadcastState, formData: FormData): 
     return { error: "Subject and message are required." };
   }
 
-  const subscribers = await prisma.newsletterSubscriber.findMany({ select: { email: true } });
+  const { rows: subscribers } = await pool.query<{ email: string }>(`select email from newsletter_subscribers`);
   if (subscribers.length === 0) {
     return { error: "No subscribers yet." };
   }

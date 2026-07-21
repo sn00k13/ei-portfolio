@@ -1,5 +1,18 @@
-import { prisma } from "@eui/db";
+import { pool, toCamelCaseRows } from "@/db";
 import { requireSection } from "@/require-section";
+
+interface BlogPostRow {
+  id: string;
+  title: string;
+  publishedAt: Date | null;
+  createdAt: Date | null;
+}
+
+interface EventRow {
+  id: string;
+  name: string;
+  dateStart: Date;
+}
 
 export const dynamic = "force-dynamic";
 
@@ -28,17 +41,19 @@ export default async function CalendarPage({
   const rangeStart = new Date(year, month, 1);
   const rangeEnd = new Date(year, month + 1, 1);
 
-  const [posts, events] = await Promise.all([
-    prisma.blogPost.findMany({
-      where: {
-        OR: [
-          { publishedAt: { gte: rangeStart, lt: rangeEnd } },
-          { createdAt: { gte: rangeStart, lt: rangeEnd } },
-        ],
-      },
-    }),
-    prisma.event.findMany({ where: { dateStart: { gte: rangeStart, lt: rangeEnd } } }),
+  const [postRows, eventRows] = await Promise.all([
+    pool.query(
+      `select id, title, published_at, created_at from blog_posts
+       where (published_at >= $1 and published_at < $2) or (created_at >= $1 and created_at < $2)`,
+      [rangeStart, rangeEnd]
+    ),
+    pool.query(`select id, name, date_start from events where date_start >= $1 and date_start < $2`, [
+      rangeStart,
+      rangeEnd,
+    ]),
   ]);
+  const posts = toCamelCaseRows<BlogPostRow>(postRows.rows);
+  const events = toCamelCaseRows<EventRow>(eventRows.rows);
 
   const items: CalItem[] = [
     ...posts.map((p) => ({

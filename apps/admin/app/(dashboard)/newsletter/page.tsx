@@ -1,14 +1,21 @@
-import { prisma } from "@eui/db";
 import { requireSection } from "@/require-section";
+import { pool, toCamelCaseRows } from "@/db";
 import { formatDate } from "@eui/shared";
 import { AddSubscriberForm, DeleteSubscriberButton } from "./subscriber-controls";
 import { BroadcastForm } from "./broadcast-form";
 
 export const dynamic = "force-dynamic";
 
+interface NewsletterSubscriberRow {
+  id: string;
+  email: string;
+  subscribedAt: string;
+}
+
 export default async function NewsletterPage() {
   await requireSection("newsletter");
-  const rows = await prisma.newsletterSubscriber.findMany({ orderBy: { subscribedAt: "desc" } });
+  const { rows: raw } = await pool.query(`select * from newsletter_subscribers order by subscribed_at desc`);
+  const rows = toCamelCaseRows<NewsletterSubscriberRow>(raw);
 
   return (
     <div>

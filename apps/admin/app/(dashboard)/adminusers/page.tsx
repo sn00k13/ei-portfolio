@@ -1,16 +1,25 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { prisma } from "@eui/db";
 import { requireSection } from "@/require-section";
+import { pool, toCamelCaseRows } from "@/db";
 import { DeleteUserButton } from "./row-actions";
 
 export const dynamic = "force-dynamic";
+
+interface AdminUserRow {
+  id: string;
+  username: string;
+  displayName: string | null;
+  role: string | null;
+  status: string | null;
+}
 
 export default async function AdminUsersPage() {
   const session = await requireSection("adminusers");
   if (session.user.role !== "super_admin") redirect("/overview");
 
-  const rows = await prisma.adminUser.findMany({ orderBy: { createdAt: "asc" } });
+  const { rows: raw } = await pool.query(`select * from admin_users order by created_at asc`);
+  const rows = toCamelCaseRows<AdminUserRow>(raw);
 
   return (
     <div>

@@ -1,11 +1,20 @@
-import { prisma } from "@eui/db";
+import { pool, toCamelCaseRows } from "@/db";
 import { requireSection } from "@/require-section";
 
 export const dynamic = "force-dynamic";
 
+interface AdminActivityLogRow {
+  id: string;
+  icon: string | null;
+  action: string;
+  detail: string | null;
+  loggedAt: string | null;
+}
+
 export default async function ActivityLogPage() {
   await requireSection("activitylog");
-  const rows = await prisma.adminActivityLog.findMany({ orderBy: { loggedAt: "desc" }, take: 300 });
+  const { rows: raw } = await pool.query(`select * from admin_activity_log order by logged_at desc limit 300`);
+  const rows = toCamelCaseRows<AdminActivityLogRow>(raw);
 
   return (
     <div>

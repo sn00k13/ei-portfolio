@@ -6,7 +6,7 @@ const nextConfig: NextConfig = {
   // (outside this repo) otherwise makes Next.js infer the wrong root and
   // mis-resolve internal build assets.
   outputFileTracingRoot: path.join(__dirname, "..", ".."),
-  transpilePackages: ["@eui/shared", "@eui/db"],
+  transpilePackages: ["@eui/shared"],
   images: {
     remotePatterns: [
       {

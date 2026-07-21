@@ -2,7 +2,7 @@ import type { CrudConfig } from "./types";
 
 export const eventsConfig: CrudConfig = {
   sectionId: "events",
-  modelName: "event",
+  tableName: "events",
   routeBase: "/events",
   label: "Events",
   titleField: "name",
@@ -32,7 +32,7 @@ export const eventsConfig: CrudConfig = {
 
 export const speakingConfig: CrudConfig = {
   sectionId: "speaking",
-  modelName: "speakingCard",
+  tableName: "speaking_cards",
   routeBase: "/speaking",
   label: "Speaking & Media",
   titleField: "title",
@@ -56,7 +56,7 @@ export const speakingConfig: CrudConfig = {
 
 export const testimonialsConfig: CrudConfig = {
   sectionId: "testimonials",
-  modelName: "testimonial",
+  tableName: "testimonials",
   routeBase: "/testimonials",
   label: "Testimonials",
   titleField: "name",
@@ -75,7 +75,7 @@ export const testimonialsConfig: CrudConfig = {
 
 export const certificationsConfig: CrudConfig = {
   sectionId: "certifications",
-  modelName: "certification",
+  tableName: "certifications",
   routeBase: "/certifications",
   label: "Certifications",
   titleField: "name",
@@ -93,7 +93,7 @@ export const certificationsConfig: CrudConfig = {
 
 export const productsConfig: CrudConfig = {
   sectionId: "products",
-  modelName: "product",
+  tableName: "products",
   routeBase: "/products",
   label: "Products (Web & Apps)",
   titleField: "name",
@@ -114,7 +114,7 @@ export const productsConfig: CrudConfig = {
 
 export const pmProjectsConfig: CrudConfig = {
   sectionId: "pmprojects",
-  modelName: "pmProject",
+  tableName: "pm_projects",
   routeBase: "/pmprojects",
   label: "PM Projects",
   titleField: "name",
@@ -132,7 +132,7 @@ export const pmProjectsConfig: CrudConfig = {
 
 export const qaProductsConfig: CrudConfig = {
   sectionId: "qaproducts",
-  modelName: "qaProduct",
+  tableName: "qa_products",
   routeBase: "/qaproducts",
   label: "QA Products",
   titleField: "name",
@@ -148,7 +148,7 @@ export const qaProductsConfig: CrudConfig = {
 
 export const venturesConfig: CrudConfig = {
   sectionId: "ventures",
-  modelName: "venture",
+  tableName: "ventures",
   routeBase: "/ventures",
   label: "Ventures",
   titleField: "name",
@@ -170,7 +170,7 @@ export const venturesConfig: CrudConfig = {
 
 export const toolsConfig: CrudConfig = {
   sectionId: "tools",
-  modelName: "cyberTool",
+  tableName: "cybertools",
   routeBase: "/tools",
   label: "Tools Built",
   titleField: "name",
@@ -188,7 +188,7 @@ export const toolsConfig: CrudConfig = {
 
 export const assessmentsConfig: CrudConfig = {
   sectionId: "assessments",
-  modelName: "assessment",
+  tableName: "assessments",
   routeBase: "/assessments",
   label: "Assessments",
   titleField: "title",

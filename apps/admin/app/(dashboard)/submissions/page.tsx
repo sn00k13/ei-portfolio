@@ -1,14 +1,25 @@
 import Link from "next/link";
-import { prisma } from "@eui/db";
 import { requireSection } from "@/require-section";
+import { pool, toCamelCaseRows } from "@/db";
 import { formatDate } from "@eui/shared";
 import { ReadToggle, DeleteSubmissionButton } from "./row-actions";
 
 export const dynamic = "force-dynamic";
 
+interface ContactSubmissionRow {
+  id: string;
+  name: string | null;
+  email: string | null;
+  subject: string | null;
+  message: string | null;
+  isRead: boolean | null;
+  createdAt: string;
+}
+
 export default async function SubmissionsPage() {
   await requireSection("submissions");
-  const rows = await prisma.contactSubmission.findMany({ orderBy: { createdAt: "desc" } });
+  const { rows: raw } = await pool.query(`select * from contact_submissions order by created_at desc`);
+  const rows = toCamelCaseRows<ContactSubmissionRow>(raw);
 
   return (
     <div>
